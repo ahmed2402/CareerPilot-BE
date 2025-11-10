@@ -3,6 +3,7 @@ import os
 import sys
 import uuid
 from langchain_core.messages import HumanMessage, AIMessage
+import datetime
 
 # Add the parent directory to the sys.path to allow importing rag_core
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

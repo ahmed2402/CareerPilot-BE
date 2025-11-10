@@ -222,14 +222,14 @@ def create_pdf_document(content: str, output_path: str, title: str = "Tailored R
             pdf.multi_cell(0, 5, line, 0, 'L')
             
     try:
-        pdf.output(output_path, 'F')
+        pdf.output(output_path)
         return True
     except Exception as e:
         print(f"Error saving PDF file: {e}")
         return False
 
 # --- Workflow Orchestration Function ---
-def generate_tailored_resume_pdf(original_resume_text: str, original_jd_text: str, output_filename_prefix: str = "Tailored_CV", output_dir: str = "../data/output") -> str | None:
+def generate_tailored_resume_pdf(original_resume_text: str, original_jd_text: str, output_filename_prefix: str = "Tailored_CV", output_dir: str = "C:/Users/Zainab/Desktop/Agentic-Resume-Intelligence-Analyzer-ARIA/data/output") -> str | None:
     print("\n--- Starting Tailored CV Generation Workflow ---")
     
     try:
