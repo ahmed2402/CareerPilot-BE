@@ -27,3 +27,6 @@ textblob
 soundfile
 streamlit-audiorec
 prefect
+fastapi==0.104.1
+uvicorn==0.23.2
+pydantic==2.5.0
