@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Dict
 
-class AtsCheckRequest(BaseModel):
+class   AtsCheckRequest(BaseModel):
     resume_text: str
     job_description: str | None = None
 
