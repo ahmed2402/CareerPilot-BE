@@ -1,40 +1,47 @@
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from .models import ResumeMatchResponse
 import os
-import tempfile
-
-from fastapi import APIRouter, HTTPException
-from .models import ResumeMatchRequest, ResumeMatchResponse
+import shutil
 import sys
+import time
+
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from workflows.resume_match_pipeline import app as resume_match_pipeline
 
 router = APIRouter()
-
 @router.post("/match", response_model=ResumeMatchResponse)
-async def match_resume(request: ResumeMatchRequest):
-    resume_file_path = None
+async def match_resume(
+    resume_file: UploadFile = File(...),
+    job_description: str = Form(...)
+):
+    timestamp = int(time.time() * 1000)
+    temp_file_path = f"temp_{timestamp}_{resume_file.filename}"
     try:
-        # Save resume text to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", mode="w+", encoding="utf-8") as temp_resume_file:
-            temp_resume_file.write(request.resume_text)
-            resume_file_path = temp_resume_file.name
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(resume_file.file, buffer)
 
-        initial_state = {"resume_path": resume_file_path, "jd_text": request.job_description}
+        initial_state = {"resume_path": temp_file_path, "jd_text": job_description}
         final_state = {}
-        for state in resume_match_pipeline.stream(initial_state):
-            final_state.update(state)
-
-        similarity_score = final_state.get("similarity_score", 0.0)
-        insights = final_state.get("insights", {})
-        output_pdf_path = final_state.get("output_pdf_path", "N/A")
-
+        
+        # FIX: Properly extract state from nested stream output
+        for output in resume_match_pipeline.stream(initial_state):
+            # Each output is like: {"node_name": {actual_state_updates}}
+            for node_name, state_updates in output.items():
+                if isinstance(state_updates, dict):
+                    final_state.update(state_updates)
+        
+        print("Final State:", final_state)  # Debug print
+        
         return ResumeMatchResponse(
-            match_score=similarity_score,
-            insights=insights,
-            output_pdf_path=output_pdf_path
+            match_score=final_state.get("similarity_score", 0.0),
+            insights=final_state.get("insights", {}),
+            output_pdf_path=final_state.get("output_pdf_path", "N/A")
         )
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
     finally:
-        # Clean up the temporary file
-        if resume_file_path and os.path.exists(resume_file_path):
-            os.remove(resume_file_path)
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)

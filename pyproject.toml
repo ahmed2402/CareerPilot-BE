@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "faiss-cpu>=1.12.0",
-    "fastapi>=0.121.1",
+    "fastapi>=0.111.0",
     "fpdf2>=2.8.5",
     "jq>=1.10.0",
     "langchain>=1.0.5",
@@ -23,6 +23,7 @@ dependencies = [
     "pandas>=2.3.3",
     "plotly>=6.4.0",
     "prefect>=3.5.0",
+    "pydantic>=2.7.4",
     "pypdf>=6.2.0",
     "python-dotenv>=1.2.1",
     "rank-bm25>=0.2.2",
@@ -35,4 +36,5 @@ dependencies = [
     "streamlit-audiorec>=0.1.3",
     "textblob>=0.19.0",
     "tiktoken>=0.12.0",
+    "uvicorn==0.23.2",
 ]

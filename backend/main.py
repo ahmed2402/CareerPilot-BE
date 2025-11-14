@@ -1,8 +1,8 @@
 from fastapi import FastAPI
-from backend.resume_matcher.router import router as resume_matcher_router
-from backend.ats_checker.router import router as ats_checker_router
-from backend.interview_prep.router import router as interview_prep_router
-from backend.mock_interview.router import router as mock_interview_router
+from resume_matcher.router import router as resume_matcher_router
+from ats_checker.router import router as ats_checker_router
+from interview_prep.router import router as interview_prep_router
+from mock_interview.router import router as mock_interview_router
 
 app = FastAPI()
 
@@ -14,3 +14,7 @@ app.include_router(mock_interview_router, prefix="/mock-interview", tags=["mock_
 @app.get("/ping")
 async def ping():
     return {"message": "pong"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
