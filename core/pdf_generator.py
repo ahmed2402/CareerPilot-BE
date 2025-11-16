@@ -229,7 +229,7 @@ def create_pdf_document(content: str, output_path: str, title: str = "Tailored R
         return False
 
 # --- Workflow Orchestration Function ---
-def generate_tailored_resume_pdf(original_resume_text: str, original_jd_text: str, output_filename_prefix: str = "Tailored_CV", output_dir: str = "./outputs/tailored_cv.pdf") -> str | None:
+def generate_tailored_resume_pdf(original_resume_text: str, original_jd_text: str, output_filename_prefix: str = "Tailored_CV", output_dir: str = "./outputs") -> str | None:
     print("\n--- Starting Tailored CV Generation Workflow ---")
     
     try:
