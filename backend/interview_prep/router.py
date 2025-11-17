@@ -7,7 +7,7 @@ from .models import (
     CreateSessionResponse, AllSessionsResponse, 
     DeleteSessionResponse, LoadChatHistoryResponse
 )
-from .sessions_store import create_session, list_sessions, delete_session
+from .sessions_store import create_session, list_sessions, delete_session,update_session_title,get_session
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from rag_core.retriever import get_full_conversational_chain, llm, get_redis_history
 
@@ -87,5 +87,11 @@ async def chat(payload: ChatRequest):
         {"input": payload.message},
         config={"configurable": {"session_id": payload.session_id}}
     )
-
+    
+#  Check and update chat title with the first message if it's still the default "New Chat"
+    session_meta = get_session(payload.session_id)
+    if session_meta and session_meta.get("title") == "New Chat":
+         # Take first 50 chars of the message for title
+         update_session_title(payload.session_id, payload.message[:50])
+ 
     return ChatResponse(session_id=payload.session_id, answer=answer)

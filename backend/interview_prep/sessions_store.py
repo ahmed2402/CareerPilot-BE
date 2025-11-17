@@ -38,3 +38,24 @@ def delete_session(session_id):
     # Delete session metadata from Redis
     result = redis_client.delete(REDIS_SESSION_PREFIX + session_id)
     return result > 0 # Return True if at least one key was deleted
+
+def get_session(session_id: str):
+    """
+    Retrieves a single session's metadata from Redis.
+    """
+    key = REDIS_SESSION_PREFIX + session_id
+    data = redis_client.get(key)
+    if data:
+        return json.loads(data)
+    return None
+
+
+def update_session_title(session_id: str, new_title: str):
+    key = REDIS_SESSION_PREFIX + session_id
+    data = redis_client.get(key)
+    if data:
+        session_meta = json.loads(data)
+        session_meta["title"] = new_title
+        redis_client.set(key, json.dumps(session_meta))
+        return True
+    return False
