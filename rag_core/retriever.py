@@ -19,7 +19,7 @@ from langchain_classic.chains import create_history_aware_retriever, create_retr
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
 # Internal project imports
-from rag_loader import load_interview_json_files
+from .rag_loader import load_interview_json_files
 
 load_dotenv()
 

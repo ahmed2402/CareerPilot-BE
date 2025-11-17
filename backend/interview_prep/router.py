@@ -1,34 +1,91 @@
-import os
+# router.py
 import sys
-from fastapi import APIRouter, HTTPException
-from .models import InterviewPrepRequest, InterviewPrepResponse
-
-# Adjust the path to import from rag_core
+import os
+from fastapi import APIRouter
+from .models import (
+    ChatRequest, ChatResponse, 
+    CreateSessionResponse, AllSessionsResponse, 
+    DeleteSessionResponse, LoadChatHistoryResponse
+)
+from .sessions_store import create_session, list_sessions, delete_session
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from rag_core.retriever import get_full_conversational_chain, llm
+from rag_core.retriever import get_full_conversational_chain, llm, get_redis_history
 
 router = APIRouter()
 
-k_retrieval = 5  # Number of documents to retrieve for RAG
+DEFAULT_K = 5
+conversation_chain = get_full_conversational_chain(llm, DEFAULT_K)
 
-# Initialize the conversational chain once when the application starts
-try:
-    interview_prep_chain = get_full_conversational_chain(llm, k_retrieval)
-except Exception as e:
-    print(f"Error initializing conversational chain: {e}")
-    # Depending on the error, you might want to exit or provide a fallback
-    interview_prep_chain = None
 
-@router.post("/prepare", response_model=InterviewPrepResponse)
-async def prepare_interview(request: InterviewPrepRequest):
-    if interview_prep_chain is None:
-        raise HTTPException(status_code=500, detail="Interview prep service is not initialized.")
+# -----------------------------------------
+# 1) Create New Chat
+# -----------------------------------------
+@router.post("/session/new", response_model=CreateSessionResponse)
+async def create_new_chat():
+    session_meta = create_session("New Chat")
+    return CreateSessionResponse(
+        session_id=session_meta["session_id"],
+        title=session_meta["title"],
+        created_at=session_meta["created_at"]
+    )
 
-    try:
-        response = interview_prep_chain.invoke(
-            {"input": request.user_message},
-            config={"configurable": {"session_id": request.session_id}}
-        )
-        return InterviewPrepResponse(ai_response=response)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing interview prep request: {str(e)}")
+
+# -----------------------------------------
+# 2) List All Sessions
+# -----------------------------------------
+@router.get("/sessions", response_model=AllSessionsResponse)
+async def get_all_sessions():
+    return AllSessionsResponse(sessions=list_sessions())
+
+
+# -----------------------------------------
+# 3) Load Chat History
+# -----------------------------------------
+@router.get("/session/{session_id}/history", response_model=LoadChatHistoryResponse)
+async def load_chat_history(session_id: str):
+    redis_history = get_redis_history(session_id)
+    messages = redis_history.messages  # List[BaseMessage]
+
+    formatted = []
+    for msg in messages:
+        # msg.type = "human" / "ai"
+        formatted.append({
+            "role": msg.type,
+            "content": msg.content
+        })
+
+    return LoadChatHistoryResponse(
+        session_id=session_id,
+        messages=formatted
+    )
+
+
+# -----------------------------------------
+# 4) Delete Chat Session
+# -----------------------------------------
+@router.delete("/session/{session_id}", response_model=DeleteSessionResponse)
+async def delete_chat(session_id: str):
+    redis_history = get_redis_history(session_id)
+    redis_history.clear()
+
+    return DeleteSessionResponse(
+        success=delete_session(session_id)
+    )
+
+
+# -----------------------------------------
+# 5) Chat Endpoint (RAG + Redis Memory)
+# -----------------------------------------
+@router.post("/chat", response_model=ChatResponse)
+async def chat(payload: ChatRequest):
+    chain = conversation_chain
+
+    if payload.k_retrieval != DEFAULT_K:
+        chain = get_full_conversational_chain(llm, payload.k_retrieval)
+
+    answer = chain.invoke(
+        {"input": payload.message},
+        config={"configurable": {"session_id": payload.session_id}}
+    )
+
+    return ChatResponse(session_id=payload.session_id, answer=answer)
