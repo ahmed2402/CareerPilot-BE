@@ -31,8 +31,6 @@ async def match_resume(
                 if isinstance(state_updates, dict):
                     final_state.update(state_updates)
         
-        print("Final State:", final_state)  # Debug print
-        
         return ResumeMatchResponse(
             match_score=final_state.get("similarity_score", 0.0),
             insights=final_state.get("insights", {}),

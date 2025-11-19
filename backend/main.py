@@ -24,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
+app.mount("/outputs", StaticFiles(directory="./outputs"), name="outputs")
 
 app.include_router(resume_matcher_router, prefix="/resume-matcher", tags=["resume_matcher"])
 app.include_router(ats_checker_router, prefix="/ats-checker", tags=["ats_checker"])
