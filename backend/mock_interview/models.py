@@ -22,7 +22,6 @@ class AnalyzeResponseRequest(BaseModel):
     question: str
     job_description: Optional[str] = None
     include_audio_analysis: bool = False
-    include_sentiment_analysis: bool = False
 
 class ScoreDetail(BaseModel):
     score: float
@@ -44,6 +43,7 @@ class AnalysisResult(BaseModel):
 
 class AnalyzeResponseResponse(BaseModel):
     analysis: AnalysisResult
+    transcript: str
     feedback: str
 
 class ReportGenerateRequest(BaseModel):

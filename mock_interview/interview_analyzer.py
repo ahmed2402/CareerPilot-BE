@@ -37,7 +37,6 @@ class InterviewAnalyzer:
     def analyze_response(self, 
             transcript: str, 
             question: str = "",
-            ideal_answer: str = "", 
             audio_features: Dict = None,
             job_description: str = "") -> Dict:
         """
@@ -77,9 +76,18 @@ Candidate Response: {transcript}
         cleaned_json_string = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', json_string)
         print("Cleaned JSON string before json.loads():", cleaned_json_string) # CRITICAL debug print
         
-        analysis = json.loads(cleaned_json_string)
+        try:
+            analysis = json.loads(cleaned_json_string)
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON from LLM response: {e}. Returning default analysis.")
+            analysis = self._get_default_analysis(f"LLM response JSON parsing failed: {e}")
+        except Exception as e:
+            print(f"Unexpected error parsing JSON: {e}. Returning default analysis.")
+            analysis = self._get_default_analysis(f"Unexpected parsing error: {e}")
+        
         # Calculate overall score as before
         analysis['overall_score'] = self._calculate_overall_score(analysis)
+        print("Analysis result:", analysis)
         return analysis
 
     def _analyze_clarity(self, text: str) -> Dict:
@@ -103,58 +111,31 @@ Candidate Response: {transcript}
             'avg_sentence_length': avg_sentence_length,
             'details': f"Filler words: {filler_count}/{total_words} ({filler_ratio:.1%})"
         }
-
-    def _analyze_sentiment(self, text: str) -> Dict:
-        """Analyze sentiment of the response"""
-        if not text or text.strip() == "":
-            return {'score': 0, 'label': 'neutral', 'details': 'No speech detected'}
-        # Using TextBlob for sentiment
-        blob = TextBlob(text)
-        polarity = blob.sentiment.polarity  # -1 to 1
-        # Using VADER for more nuanced sentiment
-        vader_scores = self.sia.polarity_scores(text)
-        # Convert to 0-1 scale
-        sentiment_score = (polarity + 1) / 2
-        # Determine label
-        if sentiment_score > 0.6:
-            label = 'positive'
-        elif sentiment_score < 0.4:
-            label = 'negative'
-        else:
-            label = 'neutral'
-        
-        return {
-            'score': sentiment_score,
-            'label': label,
-            'polarity': polarity,
-            'vader_scores': vader_scores,
-            'details': f"Sentiment: {label} (polarity: {polarity:.2f})"
-        }
     
-    def _analyze_keyword_match(self, transcript: str, ideal_answer: str) -> Dict:
-        """Analyze keyword matching with ideal answer"""
-        if not ideal_answer or not transcript:
-            return {'score': 0.5, 'details': 'No ideal answer provided for comparison'}
+    # def _analyze_keyword_match(self, transcript: str, ideal_answer: str) -> Dict:
+    #     """Analyze keyword matching with ideal answer"""
+    #     if not ideal_answer or not transcript:
+    #         return {'score': 0.5, 'details': 'No ideal answer provided for comparison'}
         
-        # Extract keywords from both texts
-        transcript_words = set(word.lower() for word in word_tokenize(transcript) 
-                             if word.isalpha() and word.lower() not in self.stop_words)
-        ideal_words = set(word.lower() for word in word_tokenize(ideal_answer) 
-                         if word.isalpha() and word.lower() not in self.stop_words)
+    #     # Extract keywords from both texts
+    #     transcript_words = set(word.lower() for word in word_tokenize(transcript) 
+    #                          if word.isalpha() and word.lower() not in self.stop_words)
+    #     ideal_words = set(word.lower() for word in word_tokenize(ideal_answer) 
+    #                      if word.isalpha() and word.lower() not in self.stop_words)
         
-        if not ideal_words:
-            return {'score': 0.5, 'details': 'No meaningful keywords in ideal answer'}
+    #     if not ideal_words:
+    #         return {'score': 0.5, 'details': 'No meaningful keywords in ideal answer'}
         
-        # Calculate overlap
-        common_words = transcript_words.intersection(ideal_words)
-        keyword_score = len(common_words) / len(ideal_words)
+    #     # Calculate overlap
+    #     common_words = transcript_words.intersection(ideal_words)
+    #     keyword_score = len(common_words) / len(ideal_words)
         
-        return {
-            'score': min(1, keyword_score),
-            'matched_keywords': list(common_words),
-            'total_ideal_keywords': len(ideal_words),
-            'details': f"Matched {len(common_words)}/{len(ideal_words)} keywords"
-        }
+    #     return {
+    #         'score': min(1, keyword_score),
+    #         'matched_keywords': list(common_words),
+    #         'total_ideal_keywords': len(ideal_words),
+    #         'details': f"Matched {len(common_words)}/{len(ideal_words)} keywords"
+    #     }
     
     def _analyze_fluency(self, text: str) -> Dict:
         """Analyze fluency and coherence"""
@@ -357,4 +338,17 @@ Candidate Response: {transcript}
             'question_relevance': question_relevance,
             'job_relevance': job_relevance,
             'details': f"Relevance: {relevance_score:.2f} (question: {question_relevance:.2f}, job: {job_relevance:.2f})"
+        }
+        
+        
+    def _get_default_analysis(self, error_message: str = "Analysis failed") -> Dict:
+        """Return a default analysis dictionary when LLM analysis fails"""
+        return {
+            'overall_score': {'score': 0, 'grade': 'F', 'percentage': 0, 'details': error_message},
+            'clarity': {'score': 0, 'details': error_message},
+            'confidence': {'score': 0, 'details': error_message},
+            'fluency': {'score': 0, 'details': error_message},
+            'relevance': {'score': 0, 'details': error_message},
+            'sentiment': {'score': 0, 'label': 'neutral', 'details': error_message},
+            'keyword_match': {'score': 0, 'details': error_message}
         }
