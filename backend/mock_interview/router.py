@@ -70,7 +70,7 @@ async def analyze_mock_interview_response(request: AnalyzeResponseRequest):
         
         feedback = interview_analyzer.generate_feedback(analysis_result)
 
-        return AnalyzeResponseResponse(analysis=analysis_result, feedback=feedback)
+        return AnalyzeResponseResponse(analysis=analysis_result,transcript=transcript, feedback=feedback)
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:

@@ -34,7 +34,8 @@ with tabs[1]:
     show_ats_checker_ui()
 
 with tabs[2]:
-    show_interview_prep_ui()
-
-with tabs[3]:
     show_mock_interview_ui()
+    
+# with tabs[3]:
+#     show_interview_prep_ui()
+

@@ -319,10 +319,13 @@ Be specific, constructive, and actionable in your feedback. Focus on helping the
         # Individual Questions
         report_lines.append("QUESTION-BY-QUESTION ANALYSIS")
         report_lines.append("-" * 30)
-        for qa in report_data['question_analysis']:
-            report_lines.append(f"Question {qa['question_number']}: {qa['question'][:50]}...")
+        for qa in report_data['question_analysis']: # qa['question'] is the full question dict
+            question_text = qa['question'].get('question', 'N/A') # Get the 'question' key's value
+            report_lines.append(f"Question {qa['question_number']}: {question_text[:50]}...") # Slice the actual text
             report_lines.append(f"Response Length: {qa['response_length']} words")
             report_lines.append(f"Overall Score: {qa.get('overall_score', 0):.1%} (Grade: {qa.get('grade', 'N/A')})")
+             
+
             
             for metric, score in qa['scores'].items():
                 report_lines.append(f"  {metric.title()}: {score:.1%}")

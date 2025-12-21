@@ -238,7 +238,6 @@ def process_response(question, question_index, audio_bytes, manual_transcript):
             analysis = analyzer.analyze_response(
                 transcript=transcript,
                 question=question['question'],
-                ideal_answer="",  # Could be enhanced with ideal answer generation
                 audio_features=audio_features,
                 job_description=st.session_state.interview_session.get('job_description', '')
             )

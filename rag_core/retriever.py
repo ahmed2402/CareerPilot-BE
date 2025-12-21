@@ -10,16 +10,28 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableBranch
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain_community.chat_message_histories import ChatMessageHistory
+
+# Redis history imports (LangChain community)
+from langchain_community.chat_message_histories import RedisChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_classic.chains import create_history_aware_retriever,create_retrieval_chain
+
+from langchain_classic.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
 # Internal project imports
 from .rag_loader import load_interview_json_files
+
 load_dotenv()
-groq_api_key = os.environ["GROQ_API_KEY"]
+
+# --- Init LLM ---
+groq_api_key = os.environ.get("GROQ_API_KEY", "")
+if not groq_api_key:
+    raise RuntimeError("Please set GROQ_API_KEY in your environment.")
 llm = ChatGroq(groq_api_key=groq_api_key, model_name="llama-3.1-8b-instant")
+
+# --- Redis Config ---
+# Allow overriding with env var REDIS_URL
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
 # --- Configuration Constants ---
 KB_DIR = os.path.join(os.path.dirname(__file__), "interview_prep_kb")
@@ -92,21 +104,17 @@ User Question: {input}"""
 CHIT_CHAT_PROMPT = ChatPromptTemplate.from_template(SYSTEM_TEMPLATE_CHIT_CHAT)
 
 # --- Chain Definitions ---
-
 def get_history_aware_retriever_chain(llm, retriever, k: int):
     """
     Creates a chain that takes chat history and a question, and rewrites the question
     to be standalone if it references past conversation.
     """
-    # Note: 'groq_llm' from core.llm_interface is used here, assuming it's available.
-    # The 'llm' parameter passed to this function should be that LLM instance.
     history_aware_retriever = create_history_aware_retriever(
-        llm, # This should be the ChatGroq instance
-        retriever, # This should be the hybrid retriever
+        llm,
+        retriever,
         CONTEXTUALIZE_Q_PROMPT
     )
     return history_aware_retriever
-
 
 def get_rag_chain(llm, k_retrieval: int):
     """
@@ -130,49 +138,75 @@ def get_chit_chat_chain(llm):
     """Creates a simple LLM chain for general conversational responses."""
     return CHIT_CHAT_PROMPT | llm | StrOutputParser()
 
-# --- Session History Management ---
-# A simple in-memory store for demonstration purposes.
-# In a real application, this would be a more persistent store (e.g., database, Redis).
-# chat_history_store = {} 
-
-def get_session_history(session_id: str,  chat_history_store: dict) -> ChatMessageHistory:
+# --- Redis-backed Chat History Helper ---
+def get_redis_history(session_id: str) -> RedisChatMessageHistory:
     """
-    Retrieves or initializes a ChatMessageHistory object for a given session ID.
+    Return RedisChatMessageHistory for a session id.
+    LangChain's RedisChatMessageHistory will persist messages in Redis.
     """
-    if session_id not in chat_history_store:
-        chat_history_store[session_id] = ChatMessageHistory()
-    return chat_history_store[session_id]
+    return RedisChatMessageHistory(session_id=session_id, url=REDIS_URL)
 
-# --- Main Conversational Chain with Routing ---
-def get_full_conversational_chain(llm, k_retrieval: int, chat_history_store: dict):
+# Utility to convert message history into plain text (for classification prompt)
+def messages_to_text(history) -> str:
+    """
+    Converts various message representations to a single plain-text block:
+      - HumanMessage / AIMessage (has .content)
+      - dicts with 'type'/'role' and 'content'
+      - plain strings
+    """
+    if not history:
+        return ""
+    text_lines = []
+    for msg in history:
+        # LangChain message objects
+        if hasattr(msg, "content"):
+            role = "User" if isinstance(msg, HumanMessage) else "Assistant"
+            text_lines.append(f"{role}: {msg.content}")
+        # if msg is a mapping/dict (some message histories store as dict)
+        elif isinstance(msg, dict):
+            role = msg.get("role") or msg.get("type") or "user"
+            content = msg.get("content") or msg.get("text") or ""
+            role_name = "User" if role.lower().startswith("human") or role.lower().startswith("user") else "Assistant"
+            text_lines.append(f"{role_name}: {content}")
+        # fallback: plain string
+        else:
+            text_lines.append(str(msg))
+    return "\n".join(text_lines)
+
+# --- Main Conversational Chain with Routing (Redis-backed) ---
+def get_full_conversational_chain(llm, k_retrieval: int):
     """
     Constructs the complete conversational chain, including intent classification
-    and routing to either the RAG chain or a chit-chat chain, with history management.
+    and routing to either the RAG chain or a chit-chat chain, with Redis-backed history.
     """
-    rag_chain_for_branch = get_rag_chain(llm, k_retrieval) # Get the RAG chain
-
+    rag_chain_for_branch = get_rag_chain(llm, k_retrieval)
     classification_chain = get_classification_chain(llm)
     chit_chat_chain = get_chit_chat_chain(llm)
 
-    # Define the branching logic:
-    # If the classification chain identifies "chit_chat", use the chit_chat_chain;
-    # otherwise, default to the RAG chain.
-    branch_chain = RunnableBranch(
-        (
-            # The lambda extracts necessary input for the classification chain
-            lambda x: classification_chain.invoke({"input": x["input"], "chat_history": x["chat_history"]}).strip().lower() == "chit_chat",
+    # routing function expects x dict containing 'input' and 'chat_history' (history list)
+    def routing_condition(x):
+        # Convert injected history to plain text for classifier
+        history_text = messages_to_text(x.get("chat_history", []))
+        # invoke classification chain with plain text history
+        intent_raw = classification_chain.invoke({"input": x["input"], "chat_history": history_text})
+        if intent_raw is None:
+            intent_raw = ""
+        intent = str(intent_raw).strip().lower()
+        # Normalize quoted outputs like "'chit_chat'" -> chit_chat
+        intent = intent.replace("'", "").replace("\"", "").strip()
+        return intent == "chit_chat"
 
-            chit_chat_chain,
-        ),
-        rag_chain_for_branch, # Default path if not "chit_chat"
+    branch_chain = RunnableBranch(
+        (routing_condition, chit_chat_chain),
+        rag_chain_for_branch
     )
 
-    # Wrap the entire branching chain with RunnableWithMessageHistory to manage chat state
+    # Wrap with RunnableWithMessageHistory to persist history into Redis
     full_chain_with_history = RunnableWithMessageHistory(
         branch_chain,
-        lambda session_id: get_session_history(session_id, chat_history_store),
-        input_messages_key="input",      # Key for the current user input in the dictionary
-        history_messages_key="chat_history", # Key for the chat history in the dictionary
+        lambda session_id: get_redis_history(session_id),
+        input_messages_key="input",
+        history_messages_key="chat_history",
     )
     return full_chain_with_history
 
@@ -180,10 +214,8 @@ def get_full_conversational_chain(llm, k_retrieval: int, chat_history_store: dic
 if __name__ == "__main__":
     k_retrieval = 5 # Number of documents to retrieve for RAG
 
-    demo_chat_history_store = {}
-    
-    # Get the complete conversational chain
-    final_conversational_chain = get_full_conversational_chain(llm, k_retrieval, demo_chat_history_store)
+    # Build chain (Redis-based history)
+    final_conversational_chain = get_full_conversational_chain(llm, k_retrieval)
 
     print(f"Conversational RAG Chain Initialized (retrieving {k_retrieval} documents).")
     print("Type ':q' to quit.")
@@ -196,10 +228,9 @@ if __name__ == "__main__":
             print("Exiting conversational RAG chain.")
             break
 
-        # Invoke the chain with the user's input and session configuration
-        # The RunnableWithMessageHistory automatically handles adding to and retrieving history
+        # RunnableWithMessageHistory expects session_id in config:configurable
         response = final_conversational_chain.invoke(
             {"input": user_input},
-            config={"configurable": {"session_id": session_id}} 
+            config={"configurable": {"session_id": session_id}}
         )
         print(f"\nAI Interview Prep Assistant: {response}")
