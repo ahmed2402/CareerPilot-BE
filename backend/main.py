@@ -36,6 +36,8 @@ app.include_router(mock_interview_router, prefix="/mock-interview", tags=["mock_
 async def ping():
     return {"message": "pong"}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# TODO : UNCOMMENT FOR DEVELOPMENT ( ONLY COMMENT WHEN DEPLOYING )
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
