@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --color-primary: #7F5AF0;
+  --color-secondary: #2C2F33;
+  --color-accent: #00BFA6;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #111827;
+  color: #f9fafb;
+  line-height: 1.6;
+}
+
+/* Smooth scrolling offset for fixed nav */
+section {
+  scroll-margin-top: 64px;
+}

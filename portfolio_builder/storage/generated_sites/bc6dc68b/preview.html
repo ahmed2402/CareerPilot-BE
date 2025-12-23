@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.min.js"></script>
+    <style>
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --color-primary: #7F5AF0;
+  --color-secondary: #2C2F33;
+  --color-accent: #00BFA6;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #111827;
+  color: #f9fafb;
+  line-height: 1.6;
+}
+
+/* Smooth scrolling offset for fixed nav */
+section {
+  scroll-margin-top: 64px;
+}
+
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        // Lucide icons setup
+        const { 
+            Github, Linkedin, Mail, ExternalLink, Menu, X, 
+            ChevronDown, ArrowRight, Code, Briefcase, GraduationCap,
+            User, Phone, MapPin, Calendar, Star
+        } = lucideReact;
+        
+        // Components
+
+const Hero = () => {
+  return (
+    <section id="hero" className="min-h-screen flex items-center justify-center relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%239C92AC%22 fill-opacity=%220.05%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
+      
+      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+        <p className="text-lg md:text-xl text-gray-400 mb-4">Hi, I'm</p>
+        <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
+          Ahmed Raza
+        </h1>
+        <h2 className="text-2xl md:text-4xl font-semibold mb-6" style={{ color: '#7F5AF0' }}>
+          Building Intelligent Solutions
+        </h2>
+        <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+          Empowering businesses with innovative AI, ML, and data-driven applications. Let's transform your vision into reality.
+        </p>
+        
+        <div className="flex justify-center gap-4 mb-12">
+          <a 
+            href="#projects" 
+            className="px-8 py-3 rounded-full font-semibold text-white transition-all hover:scale-105"
+            style={{ backgroundColor: '#7F5AF0' }}
+          >
+            View My Work
+          </a>
+          <a 
+            href="#contact" 
+            className="px-8 py-3 rounded-full font-semibold text-white border border-gray-600 hover:border-gray-400 transition-all"
+          >
+            Get In Touch
+          </a>
+        </div>
+        
+        <div className="flex justify-center gap-6">
+          <a href="https://github.com/ahmed2402" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors"><Github size={24} /></a>
+          
+          <a href="#contact" className="text-gray-400 hover:text-white transition-colors">
+            <Mail size={24} />
+          </a>
+        </div>
+      </div>
+      
+      <a href="#about" className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-gray-400 animate-bounce">
+        <ArrowDown size={32} />
+      </a>
+    </section>
+  );
+};
+
+
+
+
+const About = () => {
+  return (
+    <section id="about" className="py-20 px-4 bg-gray-800">
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-4xl font-bold text-white text-center mb-4">About Me</h2>
+        <div className="w-24 h-1 mx-auto mb-12" style={{ backgroundColor: '#7F5AF0' }}></div>
+        
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="flex justify-center">
+            <div className="w-64 h-64 rounded-full bg-gray-700 flex items-center justify-center border-4" style={{ borderColor: '#7F5AF0' }}>
+              <User size={120} className="text-gray-500" />
+            </div>
+          </div>
+          
+          <div>
+            <p className="text-lg text-gray-300 leading-relaxed mb-6">
+              As a detail-oriented and motivated Computer Science undergraduate, I've always been driven to make a meaningful impact through innovative technology solutions. Currently, I'm a Development Intern at the CSIT Department - NED, where I'm leveraging my front-end development skills to build dynamic and responsive interfaces for internal web applications.
+            </p>
+            <p className="text-lg text-gray-300 leading-relaxed">My journey in the world of tech began during my undergraduate studies at NED University, where I delved into the realms of machine learning, natural language processing, and generative AI. I was fascinated by the potential of these technologies to transform industries and improve lives. Since then, I've been actively honing my skills, working on diverse projects, and exploring the applications of AI and ML in real-world scenarios.</p>
+          </div>
+        </div>
+        
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
+          
+          <div className="text-center p-4">
+            <p className="text-3xl font-bold" style={{ color: '#7F5AF0' }}>1+ Years</p>
+            <p className="text-gray-400">Experience</p>
+          </div>
+
+          <div className="text-center p-4">
+            <p className="text-3xl font-bold" style={{ color: '#7F5AF0' }}>5+ Projects</p>
+            <p className="text-gray-400">Projects</p>
+          </div>
+
+          <div className="text-center p-4">
+            <p className="text-3xl font-bold" style={{ color: '#7F5AF0' }}>Bachelor of Science in Computer Science and Information Technology</p>
+            <p className="text-gray-400">Education</p>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+  );
+};
+
+
+
+
+const Skills = () => {
+  return (
+    <section id="skills" className="py-20 px-4 bg-gray-900">
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-4xl font-bold text-white text-center mb-4">Skills & Technologies</h2>
+        <div className="w-24 h-1 mx-auto mb-12" style={{ backgroundColor: '#7F5AF0' }}></div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+        <div className="bg-gray-700/50 rounded-xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-4">Frontend</h3>
+          <div className="flex flex-wrap gap-2">
+            <span key="Angular" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">Angular</span> <span key="HTML" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">HTML</span> <span key="CSS" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">CSS</span> <span key="JavaScript" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">JavaScript</span> <span key="Tailwind CSS" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">Tailwind CSS</span>
+          </div>
+        </div>
+        <div className="bg-gray-700/50 rounded-xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-4">Backend</h3>
+          <div className="flex flex-wrap gap-2">
+            <span key="Flask" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">Flask</span> <span key="Python" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">Python</span>
+          </div>
+        </div>
+        <div className="bg-gray-700/50 rounded-xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-4">Databases</h3>
+          <div className="flex flex-wrap gap-2">
+            <span key="MySQL" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">MySQL</span>
+          </div>
+        </div>
+        <div className="bg-gray-700/50 rounded-xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-4">Machine Learning</h3>
+          <div className="flex flex-wrap gap-2">
+            <span key="NumPy" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">NumPy</span> <span key="Pandas" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">Pandas</span> <span key="Scikit-learn" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">Scikit-learn</span> <span key="PyCaret" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">PyCaret</span> <span key="OpenCV" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">OpenCV</span>
+          </div>
+        </div>
+        <div className="bg-gray-700/50 rounded-xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-4">Natural Language Processing</h3>
+          <div className="flex flex-wrap gap-2">
+            <span key="LangChain" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">LangChain</span> <span key="HuggingFace" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">HuggingFace</span>
+          </div>
+        </div>
+        <div className="bg-gray-700/50 rounded-xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-4">Development Tools</h3>
+          <div className="flex flex-wrap gap-2">
+            <span key="Git" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">Git</span> <span key="GitHub" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">GitHub</span>
+          </div>
+        </div>
+        <div className="bg-gray-700/50 rounded-xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-4">Soft Skills</h3>
+          <div className="flex flex-wrap gap-2">
+            <span key="Problem-solving" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">Problem-solving</span> <span key="Fast learning" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">Fast learning</span> <span key="Collaboration" className="px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-300">Collaboration</span>
+          </div>
+        </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+
+
+
+const Experience = () => {
+  return (
+    <section id="experience" className="py-20 px-4 bg-gray-900">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-4xl font-bold text-white text-center mb-4">Experience</h2>
+        <div className="w-24 h-1 mx-auto mb-12" style={{ backgroundColor: '#7F5AF0' }}></div>
+        
+        <div className="space-y-0">
+          
+          <div className="relative pl-8 pb-12 border-l-2 border-gray-700 last:pb-0">
+            <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full" style={{ backgroundColor: '#7F5AF0' }}></div>
+            <div className="bg-gray-800 rounded-xl p-6">
+              <p className="text-sm text-gray-400 mb-1">Jan 2025 - Present</p>
+              <h3 className="text-xl font-semibold text-white">Development Intern</h3>
+              <p className="font-medium mb-3" style={{ color: '#7F5AF0' }}>CSIT Department - NED</p>
+              <p className="text-gray-400 mb-3">Collaborated with the department's tech team to develop and maintain internal web applications.</p>
+              <ul className="list-disc list-inside space-y-1"><li className="text-gray-400">Led the development of a dynamic and responsive Angular-based interface for internal platforms, resulting in a 30% increase in user engagement.</li> <li className="text-gray-400">Improved UI performance by 25% through optimization techniques and code reviews, ensuring seamless user experiences.</li> <li className="text-gray-400">Participated in code reviews, testing, and documentation to ensure high-quality deliverables, contributing to a 20% reduction in bugs and errors.</li></ul>
+            </div>
+          </div>
+          <div className="relative pl-8 pb-12 border-l-2 border-gray-700 last:pb-0">
+            <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full" style={{ backgroundColor: '#7F5AF0' }}></div>
+            <div className="bg-gray-800 rounded-xl p-6">
+              <p className="text-sm text-gray-400 mb-1">Jun 2023 - Aug 2023</p>
+              <h3 className="text-xl font-semibold text-white">AI/ML Intern</h3>
+              <p className="font-medium mb-3" style={{ color: '#7F5AF0' }}>NCL - NED</p>
+              <p className="text-gray-400 mb-3">Developed multiple machine learning projects, including a Unit Consumption Predictor and a Loan Approval Predictor, showcasing expertise in NLP and predictive modeling.</p>
+              <ul className="list-disc list-inside space-y-1"><li className="text-gray-400">Built and deployed a Music Sentiment Analysis Tool using NLP techniques, achieving an accuracy rate of 92%.</li> <li className="text-gray-400">Applied feature engineering, model evaluation, and performance optimization across various datasets, resulting in a 25% improvement in model efficiency.</li> <li className="text-gray-400">Collaborated with cross-functional teams to integrate models into user-friendly interfaces and dashboards, enhancing user experience and productivity by 30%.</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+
+
+
+const Projects = () => {
+  return (
+    <section id="projects" className="py-20 px-4 bg-gray-800">
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-4xl font-bold text-white text-center mb-4">Featured Projects</h2>
+        <div className="w-24 h-1 mx-auto mb-12" style={{ backgroundColor: '#7F5AF0' }}></div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          
+          <div className="bg-gray-800 rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform duration-300">
+            <div className="h-48 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+              <span className="text-6xl">🚀</span>
+            </div>
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-white mb-2">ARIA - Agentic Resume Intelligence Analyzer</h3>
+              <p className="text-gray-400 text-sm mb-4">Transform your job search with a personalized AI assistant that analyzes resumes, checks ATS, and prepares you for interviews.</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">LangGraph</span> <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">LangChain</span> <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">Prefect</span> <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">RAG</span>
+              </div>
+              <div className="flex gap-4">
+                
+                <a href="https://github.com/ahmed2402/Agentic-Resume-Intelligence-Analyzer-ARIA" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-400 hover:text-white">GitHub</a>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-800 rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform duration-300">
+            <div className="h-48 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+              <span className="text-6xl">🚀</span>
+            </div>
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-white mb-2">Loan Prediction System</h3>
+              <p className="text-gray-400 text-sm mb-4">Unlock loan approval predictions with a user-friendly interface that utilizes machine learning algorithms and real-time data.</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">Python</span> <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">Logistic Regression</span> <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">Random Forest</span> <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">XGBoost</span>
+              </div>
+              <div className="flex gap-4">
+                
+                <a href="https://github.com/ahmed2402/Loan-Prediction.git" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-400 hover:text-white">GitHub</a>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-800 rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform duration-300">
+            <div className="h-48 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+              <span className="text-6xl">🚀</span>
+            </div>
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-white mb-2">Unit Consumption Predictor</h3>
+              <p className="text-gray-400 text-sm mb-4">Optimize energy consumption with a time-series forecasting model that predicts electricity unit consumption for the upcoming month.</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">Python</span> <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">SARIMA</span> <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">Holt’s Winter Exponential Smoothing</span>
+              </div>
+              <div className="flex gap-4">
+                
+                
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-800 rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform duration-300">
+            <div className="h-48 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+              <span className="text-6xl">🚀</span>
+            </div>
+            <div className="p-6">
+              <h3 className="text-xl font-semibold text-white mb-2">CSIT-RAG Chatbot (In Development)</h3>
+              <p className="text-gray-400 text-sm mb-4">Improve departmental communication with a chatbot that handles queries related to admissions, examinations, and general departmental information.</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">LangChain</span> <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">RAG</span> <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">Knowledge Graph</span>
+              </div>
+              <div className="flex gap-4">
+                
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+
+
+
+const Contact = () => {
+  return (
+    <section id="contact" className="py-20 px-4 bg-gray-800">
+      <div className="max-w-4xl mx-auto text-center">
+        <h2 className="text-4xl font-bold text-white mb-4">Get In Touch</h2>
+        <div className="w-24 h-1 mx-auto mb-8" style={{ backgroundColor: '#7F5AF0' }}></div>
+        
+        <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
+          I'm always open to new opportunities and collaborations. 
+          Feel free to reach out if you'd like to connect!
+        </p>
+        
+        <div className="flex justify-center gap-8 mb-12">
+          
+          <a 
+            href="mailto:ahmedraza312682@gmail.com" 
+            className="flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold hover:scale-105 transition-transform"
+            style={{ backgroundColor: '#7F5AF0' }}
+          >
+            <Mail size={20} />
+            Email Me
+          </a>
+          
+        </div>
+        
+        <div className="flex justify-center gap-6">
+          <a href="https://github.com/ahmed2402" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors"><Github size={28} /></a>
+          
+          <a href="mailto:ahmedraza312682@gmail.com" className="text-gray-400 hover:text-white transition-colors"><Mail size={28} /></a>
+        </div>
+        
+        <p className="mt-16 text-gray-500 text-sm">
+          © 2024 Ahmed Raza. All rights reserved.
+        </p>
+      </div>
+    </section>
+  );
+};
+
+
+        
+        // App
+
+const navItems = [{ id: "hero", label: "Hero" }, { id: "about", label: "About" }, { id: "skills", label: "Skills" }, { id: "experience", label: "Experience" }, { id: "projects", label: "Projects" }, { id: "contact", label: "Contact" }];
+
+function App() {
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  
+  const scrollToSection = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setMobileMenuOpen(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-900/90 backdrop-blur-sm border-b border-gray-800">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <a href="#hero" className="text-xl font-bold text-white">Portfolio</a>
+          
+          {/* Desktop Nav */}
+          <ul className="hidden md:flex items-center gap-8">
+            {navItems.map((item) => (
+              <li key={item.id}>
+                <button 
+                  onClick={() => scrollToSection(item.id)}
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  {item.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+          
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden text-white"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+        
+        {/* Mobile Nav */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-gray-800 border-t border-gray-700">
+            <ul className="px-4 py-4 space-y-4">
+              {navItems.map((item) => (
+                <li key={item.id}>
+                  <button 
+                    onClick={() => scrollToSection(item.id)}
+                    className="text-gray-300 hover:text-white transition-colors block w-full text-left"
+                  >
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </nav>
+
+      {/* Sections */}
+      <main className="pt-16">
+      <Hero />
+      <About />
+      <Skills />
+      <Experience />
+      <Projects />
+      <Contact />
+      </main>
+    </div>
+  );
+}
+
+export default App;
+
+        
+        // Render
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
