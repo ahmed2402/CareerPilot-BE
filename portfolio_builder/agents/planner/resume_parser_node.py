@@ -10,6 +10,7 @@ from typing import Dict, Any
 from portfolio_builder.core.state import PortfolioBuilderState, ResumeData
 from portfolio_builder.core.llm_config import get_reasoning_llm
 from portfolio_builder.core.prompts import RESUME_PARSER_PROMPT
+from portfolio_builder.core.logger import get_logger
 from portfolio_builder.utils.text_cleaner import (
     clean_resume_text, 
     extract_urls, 
@@ -18,6 +19,8 @@ from portfolio_builder.utils.text_cleaner import (
     extract_name
 )
 from portfolio_builder.utils.helpers import safe_json_parse
+
+logger = get_logger("resume_parser")
 
 
 def resume_parser_node(state: PortfolioBuilderState) -> Dict[str, Any]:
@@ -36,12 +39,12 @@ def resume_parser_node(state: PortfolioBuilderState) -> Dict[str, Any]:
     Returns:
         Dict with resume_parsed and parsing_confidence
     """
-    print("[ResumeParser] Starting resume parsing...")
+    logger.info("Starting resume parsing...")
     
     resume_text = state.get("resume_text", "")
     
     if not resume_text:
-        print("[ResumeParser] ERROR: No resume text provided")
+        logger.error("No resume text provided")
         return {
             "resume_parsed": ResumeData(),
             "parsing_confidence": 0.0,
@@ -51,14 +54,24 @@ def resume_parser_node(state: PortfolioBuilderState) -> Dict[str, Any]:
     
     # Step 1: Clean the resume text
     cleaned_text = clean_resume_text(resume_text)
-    print(f"[ResumeParser] Cleaned text length: {len(cleaned_text)} chars")
+    logger.info(f"Cleaned text length: {len(cleaned_text)} chars")
     
-    # Step 2: Extract URLs and contact info directly (as backup)
+    # Step 2: Extract URLs and contact info directly using UTILITY FUNCTIONS (as backup)
+    logger.info("--- UTILITY FUNCTIONS: Extracting contact info as backup ---")
     extracted_urls = extract_urls(cleaned_text)
     extracted_phone = extract_phone(cleaned_text)
     extracted_name = extract_name(cleaned_text)
+    logger.info(f"  [UTILITY] Extracted name: {extracted_name or 'Not found'}")
+    logger.info(f"  [UTILITY] Extracted email: {extracted_urls.get('email') or 'Not found'}")
+    logger.info(f"  [UTILITY] Extracted phone: {extracted_phone or 'Not found'}")
+    logger.info(f"  [UTILITY] Extracted github: {extracted_urls.get('github') or 'Not found'}")
+    logger.info(f"  [UTILITY] Extracted linkedin: {extracted_urls.get('linkedin') or 'Not found'}")
     
     # Step 3: Use LLM to extract structured data
+    logger.info("--- LLM: Attempting to parse resume with LLM ---")
+    llm_result = {}
+    llm_success = False
+    
     try:
         llm = get_reasoning_llm(temperature=0.1)  # Low temperature for accuracy
         
@@ -67,21 +80,54 @@ def resume_parser_node(state: PortfolioBuilderState) -> Dict[str, Any]:
         
         llm_result = safe_json_parse(response.content, default={})
         
-        if not llm_result:
-            print("[ResumeParser] WARNING: LLM returned empty result")
-            llm_result = {}
+        if llm_result:
+            llm_success = True
+            logger.info("  [LLM] SUCCESS: LLM returned valid parsed data")
+            logger.info(f"  [LLM] Name: {llm_result.get('name', 'Not found')}")
+            logger.info(f"  [LLM] Skills count: {len(llm_result.get('skills', []))}")
+            logger.info(f"  [LLM] Projects count: {len(llm_result.get('projects', []))}")
+            logger.info(f"  [LLM] Experience count: {len(llm_result.get('experience', []))}")
+        else:
+            logger.warning("  [LLM] WARNING: LLM returned empty result, will use utility fallbacks")
         
     except Exception as e:
-        print(f"[ResumeParser] ERROR with LLM: {e}")
-        llm_result = {}
+        logger.error(f"  [LLM] ERROR: LLM parsing failed: {e}")
+        logger.warning("  [LLM] Will use utility function fallbacks")
     
     # Step 4: Build the final ResumeData, merging LLM results with direct extraction
+    logger.info("--- MERGING: Building final resume data ---")
+    
+    # For each field, log whether we're using LLM or utility function result
+    final_name = llm_result.get("name") or extracted_name or "Unknown"
+    logger.info(f"  name: '{final_name}' <- {'LLM' if llm_result.get('name') else ('UTILITY' if extracted_name else 'DEFAULT')}")
+    
+    final_email = llm_result.get("email") or extracted_urls.get("email")
+    logger.info(f"  email: '{final_email}' <- {'LLM' if llm_result.get('email') else 'UTILITY'}")
+    
+    final_phone = llm_result.get("phone") or extracted_phone
+    logger.info(f"  phone: '{final_phone}' <- {'LLM' if llm_result.get('phone') else 'UTILITY'}")
+    
+    final_github = llm_result.get("github") or extracted_urls.get("github")
+    logger.info(f"  github: '{final_github}' <- {'LLM' if llm_result.get('github') else 'UTILITY'}")
+    
+    final_linkedin = llm_result.get("linkedin") or extracted_urls.get("linkedin")
+    logger.info(f"  linkedin: '{final_linkedin}' <- {'LLM' if llm_result.get('linkedin') else 'UTILITY'}")
+    
+    skills_source = "LLM" if llm_result.get("skills") else "EMPTY"
+    logger.info(f"  skills: {len(llm_result.get('skills', []))} items <- {skills_source}")
+    
+    projects_source = "LLM" if llm_result.get("projects") else "EMPTY"
+    logger.info(f"  projects: {len(llm_result.get('projects', []))} items <- {projects_source}")
+    
+    experience_source = "LLM" if llm_result.get("experience") else "EMPTY"
+    logger.info(f"  experience: {len(llm_result.get('experience', []))} items <- {experience_source}")
+    
     resume_data = ResumeData(
-        name=llm_result.get("name") or extracted_name or "Unknown",
-        email=llm_result.get("email") or extracted_urls.get("email"),
-        phone=llm_result.get("phone") or extracted_phone,
-        linkedin=llm_result.get("linkedin") or extracted_urls.get("linkedin"),
-        github=llm_result.get("github") or extracted_urls.get("github"),
+        name=final_name,
+        email=final_email,
+        phone=final_phone,
+        linkedin=final_linkedin,
+        github=final_github,
         website=llm_result.get("website") or extracted_urls.get("website"),
         summary=llm_result.get("summary"),
         skills=normalize_skills(llm_result.get("skills", [])),
@@ -96,11 +142,13 @@ def resume_parser_node(state: PortfolioBuilderState) -> Dict[str, Any]:
     # Step 5: Calculate parsing confidence
     confidence = _calculate_parsing_confidence(resume_data)
     
-    print(f"[ResumeParser] Parsed resume for: {resume_data.get('name', 'Unknown')}")
-    print(f"[ResumeParser] Found {len(resume_data.get('skills', []))} skills")
-    print(f"[ResumeParser] Found {len(resume_data.get('projects', []))} projects")
-    print(f"[ResumeParser] Found {len(resume_data.get('experience', []))} experiences")
-    print(f"[ResumeParser] Confidence: {confidence:.2f}")
+    logger.info("--- RESULT ---")
+    logger.info(f"  Parsed resume for: {resume_data.get('name', 'Unknown')}")
+    logger.info(f"  Total skills: {len(resume_data.get('skills', []))}")
+    logger.info(f"  Total projects: {len(resume_data.get('projects', []))}")
+    logger.info(f"  Total experiences: {len(resume_data.get('experience', []))}")
+    logger.info(f"  Confidence: {confidence:.2f}")
+    logger.info(f"  Data source: {'Primarily LLM' if llm_success else 'Primarily UTILITY FUNCTIONS'}")
     
     return {
         "resume_parsed": resume_data,

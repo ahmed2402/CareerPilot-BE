@@ -10,8 +10,11 @@ from typing import Dict, Any, List
 from portfolio_builder.core.state import PortfolioBuilderState, SectionContent
 from portfolio_builder.core.llm_config import get_fast_llm
 from portfolio_builder.core.prompts import SKILLS_SECTION_PROMPT
+from portfolio_builder.core.logger import get_logger
 from portfolio_builder.utils.helpers import safe_json_parse
 from portfolio_builder.utils.text_cleaner import categorize_skills
+
+logger = get_logger("skills_section")
 
 
 def skills_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
@@ -24,18 +27,20 @@ def skills_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
     Returns:
         Dict with updated sections_content
     """
-    print("[SkillsSection] Generating skills section content...")
+    logger.info("Generating skills section content...")
     
     resume_data = state.get("resume_parsed", {})
     website_plan = state.get("website_plan", {})
     skills = resume_data.get("skills", [])
     
     if not skills:
-        print("[SkillsSection] No skills found, skipping")
+        logger.info("No skills found, skipping section")
         return {
             "sections_content": [],
             "current_node": "skills_section"
         }
+    
+    logger.info("--- LLM: Attempting to generate skills content ---")
     
     # Use LLM to generate content
     try:
@@ -51,8 +56,14 @@ def skills_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
         content = safe_json_parse(response.content, default={})
         
     except Exception as e:
-        print(f"[SkillsSection] ERROR with LLM: {e}")
+        logger.error(f"  [LLM] ERROR: {e}")
         content = {}
+    
+    llm_success = bool(content)
+    if llm_success:
+        logger.info("  [LLM] SUCCESS: Got skills content from LLM")
+    else:
+        logger.warning("  [LLM] WARNING: Using defaults for skills content")
     
     # Apply defaults
     content = _apply_skills_defaults(content, resume_data, website_plan)
@@ -64,7 +75,7 @@ def skills_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
         order=2
     )
     
-    print(f"[SkillsSection] Generated content for {len(skills)} skills")
+    logger.info(f"--- RESULT: {len(skills)} skills, source: {'LLM' if llm_success else 'DEFAULTS'} ---")
     
     return {
         "sections_content": [section_content],

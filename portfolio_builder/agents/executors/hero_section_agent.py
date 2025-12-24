@@ -10,7 +10,10 @@ from typing import Dict, Any
 from portfolio_builder.core.state import PortfolioBuilderState, SectionContent
 from portfolio_builder.core.llm_config import get_fast_llm
 from portfolio_builder.core.prompts import HERO_SECTION_PROMPT
+from portfolio_builder.core.logger import get_logger
 from portfolio_builder.utils.helpers import safe_json_parse
+
+logger = get_logger("hero_section")
 
 
 def hero_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
@@ -23,12 +26,16 @@ def hero_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
     Returns:
         Dict with updated sections_content
     """
-    print("[HeroSection] Generating hero section content...")
+    logger.info("Generating hero section content...")
     
     resume_data = state.get("resume_parsed", {})
     website_plan = state.get("website_plan", {})
     
     # Use LLM to generate content
+    logger.info("--- LLM: Attempting to generate hero content ---")
+    content = {}
+    llm_success = False
+    
     try:
         llm = get_fast_llm(temperature=0.7)
         
@@ -41,13 +48,20 @@ def hero_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
         response = llm.invoke(prompt)
         content = safe_json_parse(response.content, default={})
         
+        if content:
+            llm_success = True
+            logger.info("  [LLM] SUCCESS: Got hero content from LLM")
+            logger.info(f"  [LLM] headline: {content.get('headline', 'Not provided')}")
+            logger.info(f"  [LLM] tagline: {content.get('tagline', 'Not provided')[:50] + '...' if content.get('tagline') else 'Not provided'}")
+        else:
+            logger.warning("  [LLM] WARNING: LLM returned empty content")
+        
     except Exception as e:
-        print(f"[HeroSection] ERROR with LLM: {e}")
-        content = {}
+        logger.error(f"  [LLM] ERROR: {e}")
     
-    # Apply defaults if needed
+    # Apply defaults if needed (track what comes from LLM vs defaults)
     name = resume_data.get("name", "Developer")
-    content = _apply_hero_defaults(content, resume_data, website_plan)
+    content = _apply_hero_defaults(content, resume_data, website_plan, llm_success)
     
     section_content = SectionContent(
         section_name="hero",
@@ -56,7 +70,8 @@ def hero_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
         order=0
     )
     
-    print(f"[HeroSection] Generated content for: {name}")
+    logger.info(f"--- RESULT: Generated hero for: {name} ---")
+    logger.info(f"  Content source: {'Primarily LLM' if llm_success else 'Primarily DEFAULTS'}")
     
     return {
         "sections_content": [section_content],
@@ -64,7 +79,7 @@ def hero_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
     }
 
 
-def _apply_hero_defaults(content: Dict, resume_data: Dict, website_plan: Dict) -> Dict:
+def _apply_hero_defaults(content: Dict, resume_data: Dict, website_plan: Dict, llm_success: bool) -> Dict:
     """Apply default values for missing hero content."""
     name = resume_data.get("name", "Developer")
     
@@ -85,10 +100,12 @@ def _apply_hero_defaults(content: Dict, resume_data: Dict, website_plan: Dict) -
         "typing_animation_texts": _generate_typing_texts(resume_data)
     }
     
-    # Merge with LLM content, preferring LLM values
+    # Merge with LLM content, logging source
     for key, value in defaults.items():
         if key not in content or not content[key]:
             content[key] = value
+            if not llm_success:
+                logger.info(f"  [DEFAULT] {key}: using default value")
     
     return content
 

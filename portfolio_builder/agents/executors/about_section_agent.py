@@ -10,7 +10,10 @@ from typing import Dict, Any
 from portfolio_builder.core.state import PortfolioBuilderState, SectionContent
 from portfolio_builder.core.llm_config import get_fast_llm
 from portfolio_builder.core.prompts import ABOUT_SECTION_PROMPT
+from portfolio_builder.core.logger import get_logger
 from portfolio_builder.utils.helpers import safe_json_parse
+
+logger = get_logger("about_section")
 
 
 def about_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
@@ -23,7 +26,8 @@ def about_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
     Returns:
         Dict with updated sections_content
     """
-    print("[AboutSection] Generating about section content...")
+    logger.info("Generating about section content...")
+    logger.info("--- LLM: Attempting to generate about content ---")
     
     resume_data = state.get("resume_parsed", {})
     website_plan = state.get("website_plan", {})
@@ -42,8 +46,14 @@ def about_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
         content = safe_json_parse(response.content, default={})
         
     except Exception as e:
-        print(f"[AboutSection] ERROR with LLM: {e}")
+        logger.error(f"  [LLM] ERROR: {e}")
         content = {}
+    
+    llm_success = bool(content)
+    if llm_success:
+        logger.info("  [LLM] SUCCESS: Got about content from LLM")
+    else:
+        logger.warning("  [LLM] WARNING: Using defaults for about content")
     
     # Apply defaults
     content = _apply_about_defaults(content, resume_data, website_plan)
@@ -55,7 +65,7 @@ def about_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
         order=1
     )
     
-    print("[AboutSection] Generated about section content")
+    logger.info(f"--- RESULT: Content source: {'Primarily LLM' if llm_success else 'Primarily DEFAULTS'} ---")
     
     return {
         "sections_content": [section_content],

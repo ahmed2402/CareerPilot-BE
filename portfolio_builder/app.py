@@ -215,7 +215,7 @@ if __name__ == "__main__":
     
     # Generate portfolio
     result = generate_portfolio(
-        user_prompt="Create a modern, sleek portfolio with dark mode and subtle animations. Focus on my AI Engineer skills.",
+        user_prompt="Create a creative and professional portfolio website using my resume data, add appropriate links of my github and linkedin profile , use yellow as the background color and black as the text color and use modern typography and add good icons and subtle animations and make it responsive and add a dark mode option",
         resume_file_path="./Ahmed Raza - AI Engineer.pdf"
     )
     

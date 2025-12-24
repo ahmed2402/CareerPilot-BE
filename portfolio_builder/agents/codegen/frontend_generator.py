@@ -19,17 +19,35 @@ from portfolio_builder.utils.helpers import (
     extract_code_from_response,
     format_component_name
 )
+from portfolio_builder.core.logger import get_logger
+
+logger = get_logger("frontend_generator")
 
 
 def frontend_generator_node(state: PortfolioBuilderState) -> Dict[str, Any]:
     """
     Generate React + Tailwind code for all sections.
     """
-    print("[FrontendGenerator] Starting code generation...")
+    logger.info("="*60)
+    logger.info("FRONTEND CODE GENERATION")
+    logger.info("="*60)
     
     sections_content = state.get("sections_content", [])
     website_plan = state.get("website_plan", {})
     resume_data = state.get("resume_parsed", {})
+    
+    # Log the color scheme from website_plan
+    colors = website_plan.get("color_scheme", {})
+    logger.info(f"--- COLOR SCHEME from website_plan ---")
+    logger.info(f"  primary: {colors.get('primary', 'not set')}")
+    logger.info(f"  secondary: {colors.get('secondary', 'not set')}")
+    logger.info(f"  background: {colors.get('background', 'NOT SET - will use hardcoded gray')}")
+    logger.info(f"  text: {colors.get('text', 'NOT SET - will use hardcoded white')}")
+    
+    logger.info("--- CODE GENERATION METHOD ---")
+    logger.info("  ⚠️  Using HARDCODED TEMPLATE FUNCTIONS (not LLM)")
+    logger.info("  ⚠️  Templates have hardcoded bg-gray-900 colors")
+    logger.info("  ⚠️  LLM color scheme is IGNORED for backgrounds")
     
     generated_files: List[GeneratedCode] = []
     
@@ -37,8 +55,11 @@ def frontend_generator_node(state: PortfolioBuilderState) -> Dict[str, Any]:
     try:
         llm = get_code_llm(temperature=0.2)
     except Exception as e:
-        print(f"[FrontendGenerator] LLM not available: {e}")
+        logger.warning(f"LLM not available: {e}")
         llm = None
+    
+    logger.info("")
+    logger.info("--- GENERATING COMPONENTS (using templates, NOT LLM) ---")
     
     # Generate component for each section
     for section in sections_content:
@@ -48,7 +69,7 @@ def frontend_generator_node(state: PortfolioBuilderState) -> Dict[str, Any]:
         if not section_name:
             continue
         
-        print(f"[FrontendGenerator] Generating {section_name} component...")
+        logger.info(f"  [TEMPLATE] Generating {section_name} component...")
         
         component_code = _generate_section_component(
             llm, section_name, section_content, website_plan, resume_data
@@ -64,7 +85,7 @@ def frontend_generator_node(state: PortfolioBuilderState) -> Dict[str, Any]:
             ))
     
     # Generate App.jsx - use fallback to ensure correct imports
-    print("[FrontendGenerator] Generating App.jsx...")
+    logger.info("  [TEMPLATE] Generating App.jsx...")
     app_code = _generate_fallback_app(sections_content, website_plan, resume_data)
     generated_files.append(GeneratedCode(
         filename="App.jsx",
@@ -95,7 +116,9 @@ def frontend_generator_node(state: PortfolioBuilderState) -> Dict[str, Any]:
     config_files = _generate_config_files(website_plan, resume_data)
     generated_files.extend(config_files)
     
-    print(f"[FrontendGenerator] Generated {len(generated_files)} files")
+    logger.info("="*60)
+    logger.info(f"COMPLETED: Generated {len(generated_files)} files using TEMPLATES")
+    logger.info("="*60)
     
     return {
         "generated_files": generated_files,

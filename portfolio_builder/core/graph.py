@@ -12,6 +12,9 @@ from portfolio_builder.core.routing import (
     should_revalidate,
     check_resume_parsed
 )
+from portfolio_builder.core.logger import get_logger
+
+logger = get_logger("graph")
 
 # Import all agent nodes
 from portfolio_builder.agents.planner import (
@@ -38,7 +41,9 @@ def generate_all_sections_node(state: PortfolioBuilderState) -> Dict[str, Any]:
     This is a combined node that runs all section generators
     based on sections_to_generate from the planner.
     """
-    print("[SectionGenerator] Generating all sections...")
+    logger.info("="*60)
+    logger.info("GENERATING ALL SECTIONS")
+    logger.info("="*60)
     
     sections_to_generate = state.get("sections_to_generate", [])
     resume_data = state.get("resume_parsed", {})
@@ -60,7 +65,7 @@ def generate_all_sections_node(state: PortfolioBuilderState) -> Dict[str, Any]:
         section_key = section_name.lower()
         
         if section_key in section_generators:
-            print(f"[SectionGenerator] Generating {section_name}...")
+            logger.info(f"\n--- Processing section: {section_name.upper()} ---")
             
             try:
                 # Call the section generator
@@ -73,7 +78,7 @@ def generate_all_sections_node(state: PortfolioBuilderState) -> Dict[str, Any]:
                     all_sections_content.extend(section_content)
                     
             except Exception as e:
-                print(f"[SectionGenerator] Error generating {section_name}: {e}")
+                logger.error(f"Error generating {section_name}: {e}")
                 # Create a fallback section
                 all_sections_content.append(SectionContent(
                     section_name=section_key,
@@ -85,7 +90,9 @@ def generate_all_sections_node(state: PortfolioBuilderState) -> Dict[str, Any]:
     # Sort by order
     all_sections_content.sort(key=lambda x: x.get("order", 0))
     
-    print(f"[SectionGenerator] Generated {len(all_sections_content)} sections total")
+    logger.info("="*60)
+    logger.info(f"COMPLETED: Generated {len(all_sections_content)} sections total")
+    logger.info("="*60)
     
     return {
         "sections_content": all_sections_content,
@@ -95,7 +102,7 @@ def generate_all_sections_node(state: PortfolioBuilderState) -> Dict[str, Any]:
 
 def error_handler_node(state: PortfolioBuilderState) -> Dict[str, Any]:
     """Handle workflow errors."""
-    print("[ErrorHandler] Handling error...")
+    logger.error("Handling workflow error...")
     
     errors = state.get("errors", [])
     

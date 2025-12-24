@@ -10,7 +10,10 @@ from typing import Dict, Any, List
 from portfolio_builder.core.state import PortfolioBuilderState, SectionContent
 from portfolio_builder.core.llm_config import get_fast_llm
 from portfolio_builder.core.prompts import PROJECTS_SECTION_PROMPT
+from portfolio_builder.core.logger import get_logger
 from portfolio_builder.utils.helpers import safe_json_parse
+
+logger = get_logger("projects_section")
 
 
 def projects_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
@@ -23,18 +26,20 @@ def projects_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
     Returns:
         Dict with updated sections_content
     """
-    print("[ProjectsSection] Generating projects section content...")
+    logger.info("Generating projects section content...")
     
     resume_data = state.get("resume_parsed", {})
     website_plan = state.get("website_plan", {})
     projects = resume_data.get("projects", [])
     
     if not projects:
-        print("[ProjectsSection] No projects found, skipping")
+        logger.info("No projects found, skipping section")
         return {
             "sections_content": [],
             "current_node": "projects_section"
         }
+    
+    logger.info("--- LLM: Attempting to generate projects content ---")
     
     # Use LLM to enhance project descriptions
     try:
@@ -50,8 +55,14 @@ def projects_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
         content = safe_json_parse(response.content, default={})
         
     except Exception as e:
-        print(f"[ProjectsSection] ERROR with LLM: {e}")
+        logger.error(f"  [LLM] ERROR: {e}")
         content = {}
+    
+    llm_success = bool(content)
+    if llm_success:
+        logger.info("  [LLM] SUCCESS: Got projects content from LLM")
+    else:
+        logger.warning("  [LLM] WARNING: Using defaults for projects content")
     
     # Apply defaults
     content = _apply_projects_defaults(content, resume_data, website_plan)
@@ -63,7 +74,7 @@ def projects_section_agent(state: PortfolioBuilderState) -> Dict[str, Any]:
         order=4
     )
     
-    print(f"[ProjectsSection] Generated content for {len(projects)} projects")
+    logger.info(f"--- RESULT: {len(projects)} projects, source: {'LLM' if llm_success else 'DEFAULTS'} ---")
     
     return {
         "sections_content": [section_content],
