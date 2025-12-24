@@ -8,6 +8,7 @@ from user prompts and resume data using a LangGraph multi-agent workflow.
 import sys
 from pathlib import Path
 from typing import Dict, Any, Optional
+import time
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -49,7 +50,7 @@ def generate_portfolio(
         ValueError: If neither resume_text nor resume_file_path is provided
     """
     print("=" * 60)
-    print("🚀 Auto Portfolio Builder")
+    print("[*] Auto Portfolio Builder")
     print("=" * 60)
     
     # Validate input
@@ -58,7 +59,7 @@ def generate_portfolio(
     
     # Extract resume text from file if needed
     if not resume_text and resume_file_path:
-        print(f"📄 Parsing resume from: {resume_file_path}")
+        print(f"[FILE] Parsing resume from: {resume_file_path}")
         parser_service = get_resume_parser_service()
         resume_text = parser_service.extract_text_from_file(resume_file_path)
     
@@ -66,9 +67,9 @@ def generate_portfolio(
     if not project_id:
         project_id = generate_project_id()
     
-    print(f"📝 Project ID: {project_id}")
-    print(f"📋 User Prompt: {user_prompt[:100]}..." if len(user_prompt) > 100 else f"📋 User Prompt: {user_prompt}")
-    print(f"📄 Resume Text: {len(resume_text)} characters")
+    print(f"[ID] Project ID: {project_id}")
+    print(f"[PROMPT] User Prompt: {user_prompt[:100]}..." if len(user_prompt) > 100 else f"[PROMPT] User Prompt: {user_prompt}")
+    print(f"[RESUME] Resume Text: {len(resume_text)} characters")
     print("-" * 60)
     
     # Create initial state
@@ -82,7 +83,7 @@ def generate_portfolio(
     # Get and run the workflow
     workflow = get_workflow()
     
-    print("🔄 Starting workflow execution...")
+    print("[RUNNING] Starting workflow execution...")
     print("-" * 60)
     
     try:
@@ -90,7 +91,7 @@ def generate_portfolio(
         result = workflow.invoke(initial_state)
         
         print("-" * 60)
-        print("✅ Workflow execution complete!")
+        print("[OK] Workflow execution complete!")
         
         # Build response
         return {
@@ -107,7 +108,7 @@ def generate_portfolio(
         }
         
     except Exception as e:
-        print(f"❌ Workflow error: {e}")
+        print(f"[ERROR] Workflow error: {e}")
         import traceback
         traceback.print_exc()
         
@@ -164,63 +165,17 @@ def generate_portfolio_from_text(
 
 # Example usage
 if __name__ == "__main__":
-    # Example with sample resume text
-    sample_resume = """
-    John Doe
-    Full Stack Developer
-    Email: john.doe@email.com
-    GitHub: github.com/johndoe
-    LinkedIn: linkedin.com/in/johndoe
-    
-    SUMMARY
-    Passionate full-stack developer with 5+ years of experience building 
-    scalable web applications. Expert in React, Node.js, and cloud technologies.
-    
-    SKILLS
-    - Frontend: React, Vue.js, TypeScript, Tailwind CSS
-    - Backend: Node.js, Python, FastAPI, Express
-    - Database: PostgreSQL, MongoDB, Redis
-    - Cloud: AWS, Docker, Kubernetes
-    - Tools: Git, GitHub, Figma, VS Code
-    
-    EXPERIENCE
-    
-    Senior Software Engineer | Tech Corp | 2021 - Present
-    - Led development of microservices architecture serving 1M+ users
-    - Implemented CI/CD pipelines reducing deployment time by 60%
-    - Mentored junior developers and conducted code reviews
-    
-    Software Developer | StartupXYZ | 2019 - 2021
-    - Built React-based dashboard for data visualization
-    - Developed REST APIs using Node.js and Express
-    - Optimized database queries improving performance by 40%
-    
-    PROJECTS
-    
-    E-Commerce Platform
-    Full-stack e-commerce solution with React, Node.js, and Stripe integration
-    Technologies: React, Node.js, MongoDB, Stripe
-    GitHub: github.com/johndoe/ecommerce
-    
-    AI Chat Assistant
-    Conversational AI assistant using GPT-4 and vector search
-    Technologies: Python, FastAPI, OpenAI, Pinecone
-    Demo: aichat.johndoe.dev
-    
-    EDUCATION
-    
-    B.S. Computer Science | State University | 2019
-    GPA: 3.8/4.0
-    """
-    
     # Generate portfolio
+    import time
+    start_time = time.time()
     result = generate_portfolio(
-        user_prompt="Create a creative and professional portfolio website using my resume data, add appropriate links of my github and linkedin profile , use yellow as the background color and black as the text color and use modern typography and add good icons and subtle animations and make it responsive and add a dark mode option",
+        user_prompt="Create a sophisticated, modern portfolio website using my resume data. Use a slate grey background with emerald green accents and white text. Implement a clean bento-grid layout for the project showcase, add staggered reveal animations for page sections, and ensure it is fully responsive with elegant hover effects on all interactive elements.",
         resume_file_path="./Ahmed Raza - AI Engineer.pdf"
     )
+    end_time = time.time()
     
     print("\n" + "=" * 60)
-    print("📊 GENERATION RESULT")
+    print("[RESULT] GENERATION RESULT")
     print("=" * 60)
     print(f"Success: {result['success']}")
     print(f"Project ID: {result['project_id']}")
@@ -229,3 +184,4 @@ if __name__ == "__main__":
     print(f"Preview URL: {result['preview_url']}")
     print(f"Errors: {len(result['errors'])}")
     print(f"Warnings: {len(result.get('warnings', []))}")
+    print(f"Time taken: {end_time - start_time:.2f} seconds")
