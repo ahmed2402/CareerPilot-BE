@@ -347,8 +347,6 @@ async def preview_portfolio(project_id: str):
     """
     # Check for built dist/index.html in preview storage
     dist_index = PREVIEW_DIR / project_id / "dist" / "index.html"
-    print(f"[Preview] Looking for: {dist_index}")
-    print(f"[Preview] Exists: {dist_index.exists()}")
     if dist_index.exists():
         return FileResponse(str(dist_index), media_type="text/html")
     
@@ -385,7 +383,6 @@ async def serve_preview_files(project_id: str, path: str):
     
     # Try PREVIEW_DIR first (where we copy and build)
     dist_path = PREVIEW_DIR / project_id / "dist" / path
-    print(f"[Preview Files] Looking for: {dist_path}")
     if dist_path.exists() and dist_path.is_file():
         # Determine content type based on extension
         content_type = "application/octet-stream"

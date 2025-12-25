@@ -17,6 +17,19 @@ Server runs at: `http://localhost:8000`
 
 ---
 
+## API Endpoints Summary
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/portfolio-builder/generate` | Generate from file upload |
+| POST | `/portfolio-builder/generate-text` | Generate from resume text |
+| GET | `/portfolio-builder/status/{project_id}` | Check generation progress |
+| GET | `/portfolio-builder/preview/{project_id}` | Live preview in browser |
+| GET | `/portfolio-builder/download/{project_id}` | Download ZIP file |
+| DELETE | `/portfolio-builder/cleanup/{project_id}` | Clean up project files |
+
+---
+
 ## Step 1: Generate Portfolio (File Upload)
 
 ### Request
@@ -26,7 +39,7 @@ Server runs at: `http://localhost:8000`
 
 | Key | Type | Value |
 |-----|------|-------|
-| `resume_file` | File | Select your resume PDF/DOCX/TXT |
+| `resume_file` | File | Your resume (PDF, DOCX, or TXT) |
 | `user_prompt` | Text | `Create a modern portfolio with yellow background and black text` |
 
 ### Postman Setup
@@ -34,7 +47,7 @@ Server runs at: `http://localhost:8000`
 2. Enter URL: `http://localhost:8000/portfolio-builder/generate`
 3. Go to **Body** tab → Select **form-data**
 4. Add key `resume_file` → Change type to **File** → Select your resume
-5. Add key `user_prompt` → Enter your preferences
+5. Add key `user_prompt` → Enter your style preferences
 6. Click **Send**
 
 ### Expected Response
@@ -51,7 +64,7 @@ Server runs at: `http://localhost:8000`
 }
 ```
 
-**⚠️ IMPORTANT: Copy the `project_id` (e.g., `a1b2c3d4`)** - you need it for the next steps!
+**⚠️ Copy the `project_id`** - you need it for the next steps!
 
 ---
 
@@ -59,22 +72,23 @@ Server runs at: `http://localhost:8000`
 
 ### Request
 - **Method:** `GET`
-- **URL:** `http://localhost:8000/portfolio-builder/status/a1b2c3d4`
+- **URL:** `http://localhost:8000/portfolio-builder/status/{project_id}`
 
-**Replace `a1b2c3d4` with YOUR project_id from Step 1!**
+Replace `{project_id}` with YOUR project_id from Step 1 (e.g., `a1b2c3d4`)
 
-### Progress Updates
-| Progress | Status | Meaning |
-|----------|--------|---------|
-| 0% | pending | Queued for processing |
-| 10-20% | processing | Starting, parsing resume |
-| 30% | processing | Running workflow |
-| 90% | processing | Processing results |
-| 100% | completed | Done! Check `result` field |
+### Progress Stages
+| Progress | Step |
+|----------|------|
+| 0% | Queued for processing |
+| 10-20% | Starting, parsing resume |
+| 30% | Running workflow |
+| 80% | Copying files |
+| 85-95% | Building preview (npm install & build) |
+| 100% | Done |
 
 ### Example Responses
 
-**While processing (keep polling every 5-10 seconds):**
+**While processing:**
 ```json
 {
   "project_id": "a1b2c3d4",
@@ -85,7 +99,7 @@ Server runs at: `http://localhost:8000`
 }
 ```
 
-**When completed (progress = 100):**
+**When completed:**
 ```json
 {
   "project_id": "a1b2c3d4",
@@ -105,7 +119,7 @@ Server runs at: `http://localhost:8000`
 }
 ```
 
-**⚠️ NOTE:** Generation takes **2-3 minutes**. Keep polling until `status` = `completed`.
+**⏱️ Note:** Generation takes **3-5 minutes** (includes npm build). Keep polling until `status` = `completed`.
 
 ---
 
@@ -114,27 +128,30 @@ Server runs at: `http://localhost:8000`
 ### In Browser (RECOMMENDED)
 Once status is `completed`, open in browser:
 ```
-http://localhost:8000/portfolio-builder/preview/a1b2c3d4
+http://localhost:8000/portfolio-builder/preview/{project_id}
 ```
 
-This serves the **built React app** (from `dist/` folder after `npm run build`).
+This serves the **built React app** from `dist/` folder.
 
-**Note:** The preview is a fully working React app:
-- Hero section with your name
+**What you'll see:**
+- Hero section with your name and title
 - About, Skills, Experience, Projects, Contact sections
 - All styled with your requested colors
 
-### Build Process (Automatic)
-During generation, the backend runs:
+### How It Works
+During generation, the backend automatically:
 1. `npm install` - installs dependencies
-2. `npm run build` - creates optimized production build
+2. `npm run build` - creates production build
 3. Serves `dist/index.html` for preview
 
-### In Postman
-- **Method:** `GET`
-- **URL:** `http://localhost:8000/portfolio-builder/preview/a1b2c3d4`
-
-Response will be HTML content of the built React app.
+### For Frontend iframe
+```html
+<iframe 
+  src="http://localhost:8000/portfolio-builder/preview/{project_id}" 
+  width="100%" 
+  height="600"
+/>
+```
 
 ---
 
@@ -142,31 +159,39 @@ Response will be HTML content of the built React app.
 
 ### Request
 - **Method:** `GET`
-- **URL:** `http://localhost:8000/portfolio-builder/download/a1b2c3d4`
+- **URL:** `http://localhost:8000/portfolio-builder/download/{project_id}`
 
-### Postman Setup
-1. Select **GET** method
-2. Enter URL with your project_id
-3. Click **Send**
-4. Click **Save Response** → **Save to a file**
-5. Save as `portfolio_a1b2c3d4.zip`
+### In Postman
+1. Enter the URL with your project_id
+2. Click **Send**
+3. Click **Save Response** → **Save to a file**
+4. Save as `portfolio_{project_id}.zip`
 
-### What's in the ZIP?
-A complete React + Tailwind project:
+### ZIP Contents
 ```
 portfolio/
-├── src/
-│   ├── components/   # Hero, About, Skills, etc.
-│   ├── App.jsx
-│   └── index.css     # Tailwind styles
 ├── package.json
 ├── vite.config.js
-└── index.html
+├── index.html
+├── tailwind.config.js
+├── postcss.config.js
+├── src/
+│   ├── components/
+│   │   ├── Hero.jsx
+│   │   ├── About.jsx
+│   │   ├── Skills.jsx
+│   │   └── ...
+│   ├── App.jsx
+│   ├── main.jsx
+│   └── index.css
+└── dist/              (if built)
+    ├── index.html
+    └── assets/
 ```
 
-To run locally:
+### Run Locally
 ```bash
-unzip portfolio_a1b2c3d4.zip
+unzip portfolio_{project_id}.zip
 cd portfolio
 npm install
 npm run dev
@@ -178,18 +203,39 @@ npm run dev
 
 ### Request
 - **Method:** `DELETE`
-- **URL:** `http://localhost:8000/portfolio-builder/cleanup/a1b2c3d4`
+- **URL:** `http://localhost:8000/portfolio-builder/cleanup/{project_id}`
 
-This removes uploaded files, ZIP, and preview data to free storage.
+Removes:
+- Uploaded resume file
+- Generated ZIP
+- Preview build files
 
 ---
 
-## Quick Test Sequence
+## Alternative: Generate from Text
+
+If you have resume text instead of a file:
+
+### Request
+- **Method:** `POST`
+- **URL:** `http://localhost:8000/portfolio-builder/generate-text`
+- **Body:** `raw` → `JSON`
+
+```json
+{
+  "user_prompt": "Create a modern portfolio with dark theme",
+  "resume_text": "Ahmed Raza\nAI Engineer\n\nSkills: Python, TensorFlow, LangChain\n\nExperience:\n- AI Engineer at XYZ Company (2023-Present)"
+}
+```
+
+---
+
+## Quick Test Flow
 
 ```
 1. POST /portfolio-builder/generate         → Get project_id
 2. GET  /portfolio-builder/status/{id}      → Poll until progress=100
-3. Open /portfolio-builder/preview/{id}     → See preview in browser
+3. Open http://localhost:8000/portfolio-builder/preview/{id} in browser
 4. GET  /portfolio-builder/download/{id}    → Download ZIP
 5. DELETE /portfolio-builder/cleanup/{id}   → Clean up (optional)
 ```
@@ -200,8 +246,9 @@ This removes uploaded files, ZIP, and preview data to free storage.
 
 | Issue | Solution |
 |-------|----------|
-| `ModuleNotFoundError` | Make sure venv is activated |
+| `ModuleNotFoundError` | Activate venv: `.venv\Scripts\Activate` |
 | Connection refused | Start server: `python main.py` |
 | 404 Project not found | Check project_id is correct (no curly braces!) |
-| Status stuck at 10% | Wait 2-3 minutes, generation is running |
-| Preview empty | Check if status is `completed` first |
+| Status stuck at 30% | Wait 3-5 minutes, generation is running |
+| Preview shows blank | Wait for status = `completed`, try without trailing slash |
+| Assets not loading | Check vite.config.js has `base: './'` |
