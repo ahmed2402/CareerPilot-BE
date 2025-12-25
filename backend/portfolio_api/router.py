@@ -345,8 +345,10 @@ async def preview_portfolio(project_id: str):
     <iframe src="http://localhost:8000/portfolio-builder/preview/{project_id}" />
     ```
     """
-    # Check for built dist/index.html
+    # Check for built dist/index.html in preview storage
     dist_index = PREVIEW_DIR / project_id / "dist" / "index.html"
+    print(f"[Preview] Looking for: {dist_index}")
+    print(f"[Preview] Exists: {dist_index.exists()}")
     if dist_index.exists():
         return FileResponse(str(dist_index), media_type="text/html")
     
@@ -366,39 +368,59 @@ async def preview_portfolio(project_id: str):
     )
 
 
-@router.get("/preview/{project_id}/assets/{path:path}")
-async def serve_preview_assets(project_id: str, path: str):
-    """Serve built assets from dist/assets folder."""
-    asset_path = PREVIEW_DIR / project_id / "dist" / "assets" / path
-    if asset_path.exists() and asset_path.is_file():
-        # Determine content type
+@router.get("/preview/{project_id}/{path:path}")
+async def serve_preview_files(project_id: str, path: str):
+    """
+    Serve all files from the dist folder (assets, JS, CSS, etc).
+    
+    With base: './' in vite.config.js, the built HTML requests:
+    - ./assets/index-xxxx.js
+    - ./assets/index-xxxx.css
+    
+    Which the browser resolves to /portfolio-builder/preview/{id}/assets/...
+    """
+    # If path is empty (trailing slash case), serve index.html
+    if not path or path == "":
+        path = "index.html"
+    
+    # Try PREVIEW_DIR first (where we copy and build)
+    dist_path = PREVIEW_DIR / project_id / "dist" / path
+    print(f"[Preview Files] Looking for: {dist_path}")
+    if dist_path.exists() and dist_path.is_file():
+        # Determine content type based on extension
         content_type = "application/octet-stream"
-        if path.endswith(".css"):
+        if path.endswith(".html"):
+            content_type = "text/html"
+        elif path.endswith(".css"):
             content_type = "text/css"
         elif path.endswith(".js"):
             content_type = "application/javascript"
+        elif path.endswith(".json"):
+            content_type = "application/json"
         elif path.endswith(".png"):
             content_type = "image/png"
         elif path.endswith(".jpg") or path.endswith(".jpeg"):
             content_type = "image/jpeg"
         elif path.endswith(".svg"):
             content_type = "image/svg+xml"
+        elif path.endswith(".ico"):
+            content_type = "image/x-icon"
         elif path.endswith(".woff2"):
             content_type = "font/woff2"
         elif path.endswith(".woff"):
             content_type = "font/woff"
         
-        return FileResponse(str(asset_path), media_type=content_type)
+        return FileResponse(str(dist_path), media_type=content_type)
     
-    raise HTTPException(status_code=404, detail=f"Asset not found: {path}")
-
-
-@router.get("/preview/{project_id}/{path:path}")
-async def serve_preview_files(project_id: str, path: str):
-    """Serve any other files from dist folder."""
-    file_path = PREVIEW_DIR / project_id / "dist" / path
-    if file_path.exists() and file_path.is_file():
-        return FileResponse(str(file_path))
+    # Fallback: try original output path from job status
+    if project_id in job_status:
+        result = job_status[project_id].get("result", {})
+        if result:
+            output_path = result.get("output_path")
+            if output_path:
+                fallback_path = Path(output_path) / "dist" / path
+                if fallback_path.exists() and fallback_path.is_file():
+                    return FileResponse(str(fallback_path))
     
     raise HTTPException(status_code=404, detail=f"File not found: {path}")
 
