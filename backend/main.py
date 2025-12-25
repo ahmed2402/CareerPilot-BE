@@ -5,6 +5,7 @@ from resume_matcher.router import router as resume_matcher_router
 from ats_checker.router import router as ats_checker_router
 from interview_prep.router import router as interview_prep_router
 from mock_interview.router import router as mock_interview_router
+from portfolio_api.router import router as portfolio_builder_router
 
 app = FastAPI()
 
@@ -31,6 +32,7 @@ app.include_router(resume_matcher_router, prefix="/resume-matcher", tags=["resum
 app.include_router(ats_checker_router, prefix="/ats-checker", tags=["ats_checker"])
 app.include_router(interview_prep_router, prefix="/interview-prep", tags=["interview_prep"])
 app.include_router(mock_interview_router, prefix="/mock-interview", tags=["mock_interview"])
+app.include_router(portfolio_builder_router, prefix="/portfolio-builder", tags=["portfolio_builder"])
 
 @app.get("/ping")
 async def ping():
