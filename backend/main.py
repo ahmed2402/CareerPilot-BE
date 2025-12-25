@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from resume_matcher.router import router as resume_matcher_router
-from ats_checker.router import router as ats_checker_router
-from interview_prep.router import router as interview_prep_router
-from mock_interview.router import router as mock_interview_router
+# from resume_matcher.router import router as resume_matcher_router
+# from ats_checker.router import router as ats_checker_router
+# from interview_prep.router import router as interview_prep_router
+# from mock_interview.router import router as mock_interview_router
 
 app = FastAPI()
 
@@ -27,10 +27,10 @@ app.add_middleware(
 
 app.mount("/outputs", StaticFiles(directory="./outputs"), name="outputs")
 
-app.include_router(resume_matcher_router, prefix="/resume-matcher", tags=["resume_matcher"])
-app.include_router(ats_checker_router, prefix="/ats-checker", tags=["ats_checker"])
-app.include_router(interview_prep_router, prefix="/interview-prep", tags=["interview_prep"])
-app.include_router(mock_interview_router, prefix="/mock-interview", tags=["mock_interview"])
+# app.include_router(resume_matcher_router, prefix="/resume-matcher", tags=["resume_matcher"])
+# app.include_router(ats_checker_router, prefix="/ats-checker", tags=["ats_checker"])
+# app.include_router(interview_prep_router, prefix="/interview-prep", tags=["interview_prep"])
+# app.include_router(mock_interview_router, prefix="/mock-interview", tags=["mock_interview"])
 
 @app.get("/ping")
 async def ping():
