@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+REDIS_URL = os.environ.get("REDIS_URL", "redis://:D6giPDZMb0wh6SWL5UtvwzD4pXTNUnRz@redis-11757.c263.us-east-1-2.ec2.cloud.redislabs.com:11757")
 redis_client = redis.from_url(REDIS_URL)
 
 keys = redis_client.keys("*")

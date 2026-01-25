@@ -31,7 +31,7 @@ llm = ChatGroq(groq_api_key=groq_api_key, model_name="llama-3.1-8b-instant")
 
 # --- Redis Config ---
 # Allow overriding with env var REDIS_URL
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+REDIS_URL = os.environ.get("REDIS_URL", "redis://:D6giPDZMb0wh6SWL5UtvwzD4pXTNUnRz@redis-11757.c263.us-east-1-2.ec2.cloud.redislabs.com:11757")
 
 # --- Configuration Constants ---
 KB_DIR = os.path.join(os.path.dirname(__file__), "interview_prep_kb")
