@@ -29,16 +29,10 @@ app.add_middleware(
 app.mount("/outputs", StaticFiles(directory="./outputs"), name="outputs")
 
 app.include_router(resume_matcher_router, prefix="/resume-matcher", tags=["resume_matcher"])
-<<<<<<< HEAD
 app.include_router(ats_checker_router, prefix="/ats-checker", tags=["ats_checker"])
 app.include_router(interview_prep_router, prefix="/interview-prep", tags=["interview_prep"])
 app.include_router(mock_interview_router, prefix="/mock-interview", tags=["mock_interview"])
 app.include_router(portfolio_builder_router, prefix="/portfolio-builder", tags=["portfolio_builder"])
-=======
-# app.include_router(ats_checker_router, prefix="/ats-checker", tags=["ats_checker"])
-# app.include_router(interview_prep_router, prefix="/interview-prep", tags=["interview_prep"])
-# app.include_router(mock_interview_router, prefix="/mock-interview", tags=["mock_interview"])
->>>>>>> 224233ef2223ff69b8017968abc9359c6753a7bb
 
 @app.get("/ping")
 async def ping():
